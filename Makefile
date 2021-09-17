@@ -20,17 +20,17 @@ unused:
 
 # go get github.com/kisielk/errcheck
 errcheck:
-	@errcheck -ignorepkg=bytes -ignore=os:Remove go.etcd.io/bbolt
+	@errcheck -ignorepkg=bytes -ignore=os:Remove github.com/c0mm4nd/dbolt
 
 test:
 	TEST_FREELIST_TYPE=hashmap go test -timeout 20m -v -coverprofile cover.out -covermode atomic
 	# Note: gets "program not an importable package" in out of path builds
-	TEST_FREELIST_TYPE=hashmap go test -v ./cmd/bbolt
+	TEST_FREELIST_TYPE=hashmap go test -v ./cmd/dbolt
 
 	@echo "array freelist test"
 
 	@TEST_FREELIST_TYPE=array go test -timeout 20m -v -coverprofile cover.out -covermode atomic
 	# Note: gets "program not an importable package" in out of path builds
-	@TEST_FREELIST_TYPE=array go test -v ./cmd/bbolt
+	@TEST_FREELIST_TYPE=array go test -v ./cmd/dbolt
 
 .PHONY: race fmt errcheck test gosimple unused

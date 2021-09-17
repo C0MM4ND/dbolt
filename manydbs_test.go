@@ -1,4 +1,4 @@
-package bbolt
+package dbolt
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 func createDb(t *testing.T) (*DB, func()) {
 	// First, create a temporary directory to be used for the duration of
 	// this test.
-	tempDirName, err := ioutil.TempDir("", "bboltmemtest")
+	tempDirName, err := ioutil.TempDir("", "dboltmemtest")
 	if err != nil {
 		t.Fatalf("error creating temp dir: %v", err)
 	}
@@ -20,7 +20,7 @@ func createDb(t *testing.T) (*DB, func()) {
 
 	bdb, err := Open(path, 0600, nil)
 	if err != nil {
-		t.Fatalf("error creating bbolt db: %v", err)
+		t.Fatalf("error creating dbolt db: %v", err)
 	}
 
 	cleanup := func() {

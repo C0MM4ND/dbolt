@@ -1,6 +1,6 @@
-// +build !windows,!plan9,!solaris,!aix
+//go:build !windows && !plan9 && !solaris && !aix
 
-package bbolt
+package dbolt
 
 import (
 	"fmt"

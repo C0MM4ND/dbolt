@@ -1,4 +1,4 @@
-package bbolt
+package dbolt
 
 import (
 	"fmt"
@@ -9,11 +9,6 @@ import (
 
 	"golang.org/x/sys/windows"
 )
-
-// fdatasync flushes written data to a file descriptor.
-func fdatasync(db *DB) error {
-	return db.file.Sync()
-}
 
 // flock acquires an advisory lock on a file descriptor.
 func flock(db *DB, exclusive bool, timeout time.Duration) error {

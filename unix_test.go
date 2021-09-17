@@ -1,12 +1,12 @@
 // +build !windows
 
-package bbolt_test
+package dbolt_test
 
 import (
 	"fmt"
 	"testing"
 
-	bolt "go.etcd.io/bbolt"
+	bolt "github.com/c0mm4nd/dbolt"
 	"golang.org/x/sys/unix"
 )
 

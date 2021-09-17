@@ -19,7 +19,7 @@ import (
 	"unicode/utf8"
 	"unsafe"
 
-	bolt "go.etcd.io/bbolt"
+	bolt "github.com/c0mm4nd/dbolt"
 )
 
 var (
@@ -136,18 +136,18 @@ func (m *Main) Run(args ...string) error {
 // Usage returns the help message.
 func (m *Main) Usage() string {
 	return strings.TrimLeft(`
-Bbolt is a tool for inspecting bbolt databases.
+DBolt is a tool for inspecting dbolt databases.
 
 Usage:
 
-	bbolt command [arguments]
+	dbolt command [arguments]
 
 The commands are:
 
-    bench       run synthetic benchmark against bbolt
+    bench       run synthetic benchmark against dbolt
     buckets     print a list of buckets
-    check       verifies integrity of bbolt database
-    compact     copies a bbolt database, compacting it in the process
+    check       verifies integrity of dbolt database
+    compact     copies a dbolt database, compacting it in the process
     dump        print a hexadecimal dump of a single page
     get         print the value of a key in a bucket
     info        print basic info
@@ -158,7 +158,7 @@ The commands are:
     page-item   print the key and value of a page item.
     stats       iterate over all pages and generate usage stats
 
-Use "bbolt [command] -h" for more information about a command.
+Use "dbolt [command] -h" for more information about a command.
 `, "\n")
 }
 
@@ -1411,7 +1411,7 @@ func (cmd *BenchCommand) runWrites(db *bolt.DB, options *BenchOptions, results *
 }
 
 func (cmd *BenchCommand) runWritesSequential(db *bolt.DB, options *BenchOptions, results *BenchResults) error {
-	var i = uint32(0)
+	i := uint32(0)
 	return cmd.runWritesWithSource(db, options, results, func() uint32 { i++; return i })
 }
 
@@ -1421,7 +1421,7 @@ func (cmd *BenchCommand) runWritesRandom(db *bolt.DB, options *BenchOptions, res
 }
 
 func (cmd *BenchCommand) runWritesSequentialNested(db *bolt.DB, options *BenchOptions, results *BenchResults) error {
-	var i = uint32(0)
+	i := uint32(0)
 	return cmd.runWritesNestedWithSource(db, options, results, func() uint32 { i++; return i })
 }
 
@@ -1482,8 +1482,8 @@ func (cmd *BenchCommand) runWritesNestedWithSource(db *bolt.DB, options *BenchOp
 			b.FillPercent = options.FillPercent
 
 			for j := 0; j < options.BatchSize; j++ {
-				var key = make([]byte, options.KeySize)
-				var value = make([]byte, options.ValueSize)
+				key := make([]byte, options.KeySize)
+				value := make([]byte, options.ValueSize)
 
 				// Generate key as uint32.
 				binary.BigEndian.PutUint32(key, keySource())
@@ -1572,7 +1572,7 @@ func (cmd *BenchCommand) runReadsSequentialNested(db *bolt.DB, options *BenchOpt
 
 		for {
 			var count int
-			var top = tx.Bucket(benchBucketName)
+			top := tx.Bucket(benchBucketName)
 			if err := top.ForEach(func(name, _ []byte) error {
 				if b := top.Bucket(name); b != nil {
 					c := b.Cursor()
@@ -1701,7 +1701,7 @@ func (r *BenchResults) WriteOpDuration() time.Duration {
 
 // Returns average number of write operations that can be performed per second.
 func (r *BenchResults) WriteOpsPerSecond() int {
-	var op = r.WriteOpDuration()
+	op := r.WriteOpDuration()
 	if op == 0 {
 		return 0
 	}
@@ -1718,7 +1718,7 @@ func (r *BenchResults) ReadOpDuration() time.Duration {
 
 // Returns average number of read operations that can be performed per second.
 func (r *BenchResults) ReadOpsPerSecond() int {
-	var op = r.ReadOpDuration()
+	op := r.ReadOpDuration()
 	if op == 0 {
 		return 0
 	}

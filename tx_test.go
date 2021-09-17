@@ -1,4 +1,4 @@
-package bbolt_test
+package dbolt_test
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	bolt "go.etcd.io/bbolt"
+	bolt "github.com/c0mm4nd/dbolt"
 )
 
 // TestTx_Check_ReadOnly tests consistency checking on a ReadOnly database.

@@ -1,6 +1,6 @@
-// +build aix
+//go:build aix
 
-package bbolt
+package dbolt
 
 import (
 	"fmt"

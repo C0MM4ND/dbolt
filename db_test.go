@@ -1,4 +1,4 @@
-package bbolt_test
+package dbolt_test
 
 import (
 	"bytes"
@@ -18,7 +18,7 @@ import (
 	"time"
 	"unsafe"
 
-	bolt "go.etcd.io/bbolt"
+	bolt "github.com/c0mm4nd/dbolt"
 )
 
 var statsFlag = flag.Bool("stats", false, "show performance stats")

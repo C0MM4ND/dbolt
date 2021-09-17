@@ -1,6 +1,6 @@
 // +build !windows
 
-package bbolt
+package dbolt
 
 import "golang.org/x/sys/unix"
 
