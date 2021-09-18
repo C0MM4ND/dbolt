@@ -465,7 +465,7 @@ func (cmd *PageItemCommand) Run(args ...string) error {
 	}
 
 	if options.keyOnly && options.valueOnly {
-		return fmt.Errorf("The --key-only or --value-only flag may be set, but not both.")
+		return fmt.Errorf("the --key-only or --value-only flag may be set, but not both")
 	}
 
 	// Require database path and page id.
@@ -518,9 +518,9 @@ func (cmd *PageItemCommand) Run(args ...string) error {
 
 // leafPageElement retrieves a leaf page element.
 func (cmd *PageItemCommand) leafPageElement(pageBytes []byte, index uint16) (*leafPageElement, error) {
-	p := (*page)(unsafe.Pointer(&pageBytes[0]))
+	p := (*Page)(unsafe.Pointer(&pageBytes[0]))
 	if index >= p.count {
-		return nil, fmt.Errorf("leafPageElement: expected item index less than %d, but got %d.", p.count, index)
+		return nil, fmt.Errorf("leafPageElement: expected item index less than %d, but got %d", p.count, index)
 	}
 	if p.Type() != "leaf" {
 		return nil, fmt.Errorf("leafPageElement: expected page type of 'leaf', but got '%s'", p.Type())
@@ -562,7 +562,7 @@ func (cmd *PageItemCommand) PrintLeafItemKey(w io.Writer, pageBytes []byte, inde
 	return cmd.writeBytes(w, e.key(), format)
 }
 
-// PrintLeafItemKey writes the bytes of a leaf element's value.
+// PrintLeafItemValue writes the bytes of a leaf element's value.
 func (cmd *PageItemCommand) PrintLeafItemValue(w io.Writer, pageBytes []byte, index uint16, format string) error {
 	e, err := cmd.leafPageElement(pageBytes, index)
 	if err != nil {
@@ -694,7 +694,7 @@ func (cmd *PageCommand) PrintMeta(w io.Writer, buf []byte) error {
 
 // PrintLeaf prints the data for a leaf page.
 func (cmd *PageCommand) PrintLeaf(w io.Writer, buf []byte) error {
-	p := (*page)(unsafe.Pointer(&buf[0]))
+	p := (*Page)(unsafe.Pointer(&buf[0]))
 
 	// Print number of items.
 	fmt.Fprintf(w, "Item Count: %d\n", p.count)
@@ -731,7 +731,7 @@ func (cmd *PageCommand) PrintLeaf(w io.Writer, buf []byte) error {
 
 // PrintBranch prints the data for a leaf page.
 func (cmd *PageCommand) PrintBranch(w io.Writer, buf []byte) error {
-	p := (*page)(unsafe.Pointer(&buf[0]))
+	p := (*Page)(unsafe.Pointer(&buf[0]))
 
 	// Print number of items.
 	fmt.Fprintf(w, "Item Count: %d\n", p.count)
@@ -757,7 +757,7 @@ func (cmd *PageCommand) PrintBranch(w io.Writer, buf []byte) error {
 
 // PrintFreelist prints the data for a freelist page.
 func (cmd *PageCommand) PrintFreelist(w io.Writer, buf []byte) error {
-	p := (*page)(unsafe.Pointer(&buf[0]))
+	p := (*Page)(unsafe.Pointer(&buf[0]))
 
 	// Check for overflow and, if present, adjust starting index and actual element count.
 	idx, count := 0, int(p.count)
@@ -905,7 +905,7 @@ func (cmd *PagesCommand) Run(args ...string) error {
 			fmt.Fprintf(cmd.Stdout, "%-8d %-10s %-6s %-6s\n", p.ID, p.Type, count, overflow)
 
 			// Move to the next non-overflow page.
-			id += 1
+			id++
 			if p.Type != "free" {
 				id += p.OverflowCount
 			}
@@ -978,7 +978,7 @@ func (cmd *StatsCommand) Run(args ...string) error {
 		if err := tx.ForEach(func(name []byte, b *bolt.Bucket) error {
 			if bytes.HasPrefix(name, []byte(prefix)) {
 				s.Add(b.Stats())
-				count += 1
+				count++
 			}
 			return nil
 		}); err != nil {
@@ -1691,7 +1691,7 @@ type BenchResults struct {
 	ReadDuration  time.Duration
 }
 
-// Returns the duration for a single write operation.
+// WriteOpDuration returns the duration for a single write operation.
 func (r *BenchResults) WriteOpDuration() time.Duration {
 	if r.WriteOps == 0 {
 		return 0
@@ -1699,7 +1699,7 @@ func (r *BenchResults) WriteOpDuration() time.Duration {
 	return r.WriteDuration / time.Duration(r.WriteOps)
 }
 
-// Returns average number of write operations that can be performed per second.
+// WriteOpsPerSecond returns average number of write operations that can be performed per second.
 func (r *BenchResults) WriteOpsPerSecond() int {
 	op := r.WriteOpDuration()
 	if op == 0 {
@@ -1708,7 +1708,7 @@ func (r *BenchResults) WriteOpsPerSecond() int {
 	return int(time.Second) / int(op)
 }
 
-// Returns the duration for a single read operation.
+// ReadOpDuration returns the duration for a single read operation.
 func (r *BenchResults) ReadOpDuration() time.Duration {
 	if r.ReadOps == 0 {
 		return 0
@@ -1716,7 +1716,7 @@ func (r *BenchResults) ReadOpDuration() time.Duration {
 	return r.ReadDuration / time.Duration(r.ReadOps)
 }
 
-// Returns average number of read operations that can be performed per second.
+// ReadOpsPerSecond returns average number of read operations that can be performed per second.
 func (r *BenchResults) ReadOpsPerSecond() int {
 	op := r.ReadOpDuration()
 	if op == 0 {
@@ -1749,7 +1749,7 @@ func isPrintable(s string) bool {
 
 // ReadPage reads page info & full page data from a path.
 // This is not transactionally safe.
-func ReadPage(path string, pageID int) (*page, []byte, error) {
+func ReadPage(path string, pageID int) (*Page, []byte, error) {
 	// Find page size.
 	pageSize, err := ReadPageSize(path)
 	if err != nil {
@@ -1772,7 +1772,7 @@ func ReadPage(path string, pageID int) (*page, []byte, error) {
 	}
 
 	// Determine total number of blocks.
-	p := (*page)(unsafe.Pointer(&buf[0]))
+	p := (*Page)(unsafe.Pointer(&buf[0]))
 	overflowN := p.overflow
 
 	// Re-read entire page (with overflow) into buffer.
@@ -1782,7 +1782,7 @@ func ReadPage(path string, pageID int) (*page, []byte, error) {
 	} else if n != len(buf) {
 		return nil, nil, io.ErrUnexpectedEOF
 	}
-	p = (*page)(unsafe.Pointer(&buf[0]))
+	p = (*Page)(unsafe.Pointer(&buf[0]))
 
 	return p, buf, nil
 }
@@ -1861,7 +1861,7 @@ type bucket struct {
 }
 
 // DO NOT EDIT. Copied from the "bolt" package.
-type page struct {
+type Page struct {
 	id       pgid
 	flags    uint16
 	count    uint16
@@ -1870,7 +1870,7 @@ type page struct {
 }
 
 // DO NOT EDIT. Copied from the "bolt" package.
-func (p *page) Type() string {
+func (p *Page) Type() string {
 	if (p.flags & branchPageFlag) != 0 {
 		return "branch"
 	} else if (p.flags & leafPageFlag) != 0 {
@@ -1884,13 +1884,13 @@ func (p *page) Type() string {
 }
 
 // DO NOT EDIT. Copied from the "bolt" package.
-func (p *page) leafPageElement(index uint16) *leafPageElement {
+func (p *Page) leafPageElement(index uint16) *leafPageElement {
 	n := &((*[0x7FFFFFF]leafPageElement)(unsafe.Pointer(&p.ptr)))[index]
 	return n
 }
 
 // DO NOT EDIT. Copied from the "bolt" package.
-func (p *page) branchPageElement(index uint16) *branchPageElement {
+func (p *Page) branchPageElement(index uint16) *branchPageElement {
 	return &((*[0x7FFFFFF]branchPageElement)(unsafe.Pointer(&p.ptr)))[index]
 }
 

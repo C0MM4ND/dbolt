@@ -8,15 +8,10 @@ race:
 	@TEST_FREELIST_TYPE=array go test -v -race -test.run="TestSimulate_(100op|1000op)"
 
 fmt:
-	!(gofmt -l -s -d $(shell find . -name \*.go) | grep '[a-z]')
+	!(gofmt -l -s -d $(shell find . -name '*.go') | grep '[a-z]')
 
-# go get honnef.co/go/tools/simple
-gosimple:
-	gosimple ./...
-
-# go get honnef.co/go/tools/unused
-unused:
-	unused ./...
+imports:
+	goimports -l $(shell find . -name '*.go')
 
 # go get github.com/kisielk/errcheck
 errcheck:

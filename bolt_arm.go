@@ -1,3 +1,5 @@
+//go:build arm
+
 package dbolt
 
 // maxMapSize represents the largest mmap size supported by Bolt.

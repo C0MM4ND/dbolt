@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	bolt "github.com/c0mm4nd/dbolt"
+	main "github.com/c0mm4nd/dbolt/cmd/dbolt"
 )
 
 // Ensure the "info" command can print information about a database.

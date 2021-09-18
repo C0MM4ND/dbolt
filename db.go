@@ -24,12 +24,6 @@ const magic uint32 = 0xED0CDAED
 
 const pgidNoFreelist pgid = 0xffffffffffffffff
 
-// IgnoreNoSync specifies whether the NoSync field of a DB is ignored when
-// syncing changes to a file.  This is required as some operating systems,
-// such as OpenBSD, do not have a unified buffer cache (UBC) and writes
-// must be synchronized using the msync(2) syscall.
-const IgnoreNoSync = runtime.GOOS == "openbsd"
-
 // Default values if not set in a DB instance.
 const (
 	DefaultMaxBatchSize  int = 1000
@@ -345,7 +339,7 @@ func (db *DB) mmap(minsz int) error {
 
 	// Ensure the size is at least the minimum size.
 	fileSize := int(info.Size())
-	var size = fileSize
+	size := fileSize
 	if size < minsz {
 		size = minsz
 	}
@@ -852,7 +846,7 @@ func (b *batch) run() {
 
 retry:
 	for len(b.calls) > 0 {
-		var failIdx = -1
+		failIdx := -1
 		err := b.db.Update(func(tx *Tx) error {
 			for i, c := range b.calls {
 				if err := safelyCall(c.fn, tx); err != nil {
@@ -981,7 +975,7 @@ func (db *DB) allocate(txid txid, count int) (*page, error) {
 
 	// Resize mmap() if we're at the end.
 	p.id = db.rwtx.meta.pgid
-	var minsz = int((p.id+pgid(count))+1) * db.pageSize
+	minsz := int((p.id+pgid(count))+1) * db.pageSize
 	if minsz >= db.datasz {
 		if err := db.mmap(minsz); err != nil {
 			return nil, fmt.Errorf("mmap allocate error: %s", err)
@@ -1219,7 +1213,7 @@ func (m *meta) write(p *page) {
 
 // generates the checksum for the meta.
 func (m *meta) sum64() uint64 {
-	var h = fnv.New64a()
+	h := fnv.New64a()
 	_, _ = h.Write((*[unsafe.Offsetof(meta{}.checksum)]byte)(unsafe.Pointer(m))[:])
 	return h.Sum64()
 }

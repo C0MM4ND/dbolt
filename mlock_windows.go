@@ -1,3 +1,5 @@
+//go:build windows
+
 package dbolt
 
 // mlock locks memory of db file
