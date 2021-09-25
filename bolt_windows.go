@@ -86,7 +86,9 @@ func mmap(db *DB, sz int) error {
 	}
 
 	// Convert to a byte array.
+	//revive:disable
 	db.data = ((*[maxMapSize]byte)(unsafe.Pointer(addr)))
+	//revive:enable
 	db.datasz = sz
 
 	return nil

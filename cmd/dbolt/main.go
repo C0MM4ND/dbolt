@@ -496,7 +496,7 @@ func (cmd *PageItemCommand) Run(args ...string) error {
 	defer func() { _ = f.Close() }()
 
 	// Retrieve page info and page size.
-	_, buf, err := ReadPage(path, pageID)
+	_, buf, err := readPage(path, pageID)
 	if err != nil {
 		return err
 	}
@@ -518,7 +518,7 @@ func (cmd *PageItemCommand) Run(args ...string) error {
 
 // leafPageElement retrieves a leaf page element.
 func (cmd *PageItemCommand) leafPageElement(pageBytes []byte, index uint16) (*leafPageElement, error) {
-	p := (*Page)(unsafe.Pointer(&pageBytes[0]))
+	p := (*page)(unsafe.Pointer(&pageBytes[0]))
 	if index >= p.count {
 		return nil, fmt.Errorf("leafPageElement: expected item index less than %d, but got %d", p.count, index)
 	}
@@ -648,7 +648,7 @@ func (cmd *PageCommand) Run(args ...string) error {
 		}
 
 		// Retrieve page info and page size.
-		p, buf, err := ReadPage(path, pageID)
+		p, buf, err := readPage(path, pageID)
 		if err != nil {
 			return err
 		}
@@ -694,7 +694,7 @@ func (cmd *PageCommand) PrintMeta(w io.Writer, buf []byte) error {
 
 // PrintLeaf prints the data for a leaf page.
 func (cmd *PageCommand) PrintLeaf(w io.Writer, buf []byte) error {
-	p := (*Page)(unsafe.Pointer(&buf[0]))
+	p := (*page)(unsafe.Pointer(&buf[0]))
 
 	// Print number of items.
 	fmt.Fprintf(w, "Item Count: %d\n", p.count)
@@ -731,7 +731,7 @@ func (cmd *PageCommand) PrintLeaf(w io.Writer, buf []byte) error {
 
 // PrintBranch prints the data for a leaf page.
 func (cmd *PageCommand) PrintBranch(w io.Writer, buf []byte) error {
-	p := (*Page)(unsafe.Pointer(&buf[0]))
+	p := (*page)(unsafe.Pointer(&buf[0]))
 
 	// Print number of items.
 	fmt.Fprintf(w, "Item Count: %d\n", p.count)
@@ -757,7 +757,7 @@ func (cmd *PageCommand) PrintBranch(w io.Writer, buf []byte) error {
 
 // PrintFreelist prints the data for a freelist page.
 func (cmd *PageCommand) PrintFreelist(w io.Writer, buf []byte) error {
-	p := (*Page)(unsafe.Pointer(&buf[0]))
+	p := (*page)(unsafe.Pointer(&buf[0]))
 
 	// Check for overflow and, if present, adjust starting index and actual element count.
 	idx, count := 0, int(p.count)
@@ -1725,6 +1725,7 @@ func (r *BenchResults) ReadOpsPerSecond() int {
 	return int(time.Second) / int(op)
 }
 
+// PageError represents an error caused by an operation on a page that was full.
 type PageError struct {
 	ID  int
 	Err error
@@ -1747,9 +1748,9 @@ func isPrintable(s string) bool {
 	return true
 }
 
-// ReadPage reads page info & full page data from a path.
+// readPage reads page info & full page data from a path.
 // This is not transactionally safe.
-func ReadPage(path string, pageID int) (*Page, []byte, error) {
+func readPage(path string, pageID int) (*page, []byte, error) {
 	// Find page size.
 	pageSize, err := ReadPageSize(path)
 	if err != nil {
@@ -1772,7 +1773,7 @@ func ReadPage(path string, pageID int) (*Page, []byte, error) {
 	}
 
 	// Determine total number of blocks.
-	p := (*Page)(unsafe.Pointer(&buf[0]))
+	p := (*page)(unsafe.Pointer(&buf[0]))
 	overflowN := p.overflow
 
 	// Re-read entire page (with overflow) into buffer.
@@ -1782,7 +1783,7 @@ func ReadPage(path string, pageID int) (*Page, []byte, error) {
 	} else if n != len(buf) {
 		return nil, nil, io.ErrUnexpectedEOF
 	}
-	p = (*Page)(unsafe.Pointer(&buf[0]))
+	p = (*page)(unsafe.Pointer(&buf[0]))
 
 	return p, buf, nil
 }
@@ -1861,7 +1862,7 @@ type bucket struct {
 }
 
 // DO NOT EDIT. Copied from the "bolt" package.
-type Page struct {
+type page struct {
 	id       pgid
 	flags    uint16
 	count    uint16
@@ -1870,7 +1871,7 @@ type Page struct {
 }
 
 // DO NOT EDIT. Copied from the "bolt" package.
-func (p *Page) Type() string {
+func (p *page) Type() string {
 	if (p.flags & branchPageFlag) != 0 {
 		return "branch"
 	} else if (p.flags & leafPageFlag) != 0 {
@@ -1884,13 +1885,13 @@ func (p *Page) Type() string {
 }
 
 // DO NOT EDIT. Copied from the "bolt" package.
-func (p *Page) leafPageElement(index uint16) *leafPageElement {
+func (p *page) leafPageElement(index uint16) *leafPageElement {
 	n := &((*[0x7FFFFFF]leafPageElement)(unsafe.Pointer(&p.ptr)))[index]
 	return n
 }
 
 // DO NOT EDIT. Copied from the "bolt" package.
-func (p *Page) branchPageElement(index uint16) *branchPageElement {
+func (p *page) branchPageElement(index uint16) *branchPageElement {
 	return &((*[0x7FFFFFF]branchPageElement)(unsafe.Pointer(&p.ptr)))[index]
 }
 

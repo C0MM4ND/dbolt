@@ -1,6 +1,6 @@
 # DBolt
 
-Another fork of the [boltdb](https://github.com/boltdb/bolt), kv-DB for main stream cloud services and clients
+Another fork of the [boltdb](https://github.com/boltdb/bolt) (or [bbolt](https://github.com/etcd-io/bbolt)), kv-DB for main stream cloud services and clients
 
 ## Arch & OS
 
