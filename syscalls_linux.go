@@ -65,7 +65,7 @@ func mmap(db *DB, sz int) error {
 
 	// Save the original byte slice and convert to a byte array pointer.
 	db.dataref = b
-	db.data = (*[maxMapSize]byte)(unsafe.Pointer(&b[0]))
+	db.data = (*[MaxMapSize]byte)(unsafe.Pointer(&b[0]))
 	db.datasz = sz
 	return nil
 }
@@ -83,4 +83,9 @@ func munmap(db *DB) error {
 	db.data = nil
 	db.datasz = 0
 	return err
+}
+
+// fdatasync flushes written data to a file descriptor.
+func fdatasync(db *DB) error {
+	return syscall.Fdatasync(int(db.file.Fd()))
 }

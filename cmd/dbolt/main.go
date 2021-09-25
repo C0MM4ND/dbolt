@@ -763,7 +763,7 @@ func (cmd *PageCommand) PrintFreelist(w io.Writer, buf []byte) error {
 	idx, count := 0, int(p.count)
 	if p.count == 0xFFFF {
 		idx = 1
-		count = int(((*[maxAllocSize]pgid)(unsafe.Pointer(&p.ptr)))[0])
+		count = int(((*[MaxAllocSize]pgid)(unsafe.Pointer(&p.ptr)))[0])
 	}
 
 	// Print number of items.
@@ -773,7 +773,7 @@ func (cmd *PageCommand) PrintFreelist(w io.Writer, buf []byte) error {
 	fmt.Fprintf(w, "\n")
 
 	// Print each page in the freelist.
-	ids := (*[maxAllocSize]pgid)(unsafe.Pointer(&p.ptr))
+	ids := (*[MaxAllocSize]pgid)(unsafe.Pointer(&p.ptr))
 	for i := idx; i < count; i++ {
 		fmt.Fprintf(w, "%d\n", ids[i])
 	}
@@ -1823,9 +1823,6 @@ func atois(strs []string) ([]int, error) {
 }
 
 // DO NOT EDIT. Copied from the "bolt" package.
-const maxAllocSize = 0xFFFFFFF
-
-// DO NOT EDIT. Copied from the "bolt" package.
 const (
 	branchPageFlag   = 0x01
 	leafPageFlag     = 0x02
@@ -1904,7 +1901,7 @@ type branchPageElement struct {
 
 // DO NOT EDIT. Copied from the "bolt" package.
 func (n *branchPageElement) key() []byte {
-	buf := (*[maxAllocSize]byte)(unsafe.Pointer(n))
+	buf := (*[MaxAllocSize]byte)(unsafe.Pointer(n))
 	return buf[n.pos : n.pos+n.ksize]
 }
 
@@ -1918,13 +1915,13 @@ type leafPageElement struct {
 
 // DO NOT EDIT. Copied from the "bolt" package.
 func (n *leafPageElement) key() []byte {
-	buf := (*[maxAllocSize]byte)(unsafe.Pointer(n))
+	buf := (*[MaxAllocSize]byte)(unsafe.Pointer(n))
 	return buf[n.pos : n.pos+n.ksize]
 }
 
 // DO NOT EDIT. Copied from the "bolt" package.
 func (n *leafPageElement) value() []byte {
-	buf := (*[maxAllocSize]byte)(unsafe.Pointer(n))
+	buf := (*[MaxAllocSize]byte)(unsafe.Pointer(n))
 	return buf[n.pos+n.ksize : n.pos+n.ksize+n.vsize]
 }
 

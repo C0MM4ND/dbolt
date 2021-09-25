@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 	"unsafe"
+
+	"github.com/c0mm4nd/dbolt/consts"
 )
 
 // default page size for db is set to the OS page size.
@@ -28,6 +30,15 @@ const (
 	FreelistMapType = FreelistType("hashmap")
 )
 
+// The largest step that can be taken when remapping the mmap.
+const MaxMmapStep = 1 << 30 // 1GB
+
+// Version is the data file format version.
+const Version = 1
+
+// Magic represents a marker value to indicate that a file is a DBolt DB.
+const Magic uint32 = 0xDEADCAFE // changed from reversed deadcode to deadcafe
+
 // DB represents a collection of buckets persisted to a file on disk.
 // All data access is performed through transactions which can be obtained through the DB.
 // All the functions on DB will return a ErrDatabaseNotOpen if accessed before Open() is called.
@@ -38,7 +49,7 @@ type DB struct {
 	openFile func(string, int, os.FileMode) (*os.File, error)
 	file     *os.File
 	dataref  []byte // mmap'ed readonly, write throws SEGV
-	data     *[maxMapSize]byte
+	data     *[consts.MaxMapSize]byte
 	datasz   int
 	filesz   int // current on disk file size
 	meta0    *meta
@@ -323,14 +334,14 @@ func (db *DB) mmapSize(size int) (int, error) {
 	}
 
 	// Verify the requested size is not above the maximum allowed.
-	if size > maxMapSize {
+	if size > consts.MaxMapSize {
 		return 0, fmt.Errorf("mmap too large")
 	}
 
 	// If larger than 1GB then grow by 1GB at a time.
 	sz := int64(size)
-	if remainder := sz % int64(maxMmapStep); remainder > 0 {
-		sz += int64(maxMmapStep) - remainder
+	if remainder := sz % int64(MaxMmapStep); remainder > 0 {
+		sz += int64(MaxMmapStep) - remainder
 	}
 
 	// Ensure that the mmap size is a multiple of the page size.
@@ -341,8 +352,8 @@ func (db *DB) mmapSize(size int) (int, error) {
 	}
 
 	// If we've exceeded the max size then only grow up to the max size.
-	if sz > maxMapSize {
-		sz = maxMapSize
+	if sz > consts.MaxMapSize {
+		sz = consts.MaxMapSize
 	}
 
 	return int(sz), nil
@@ -383,8 +394,8 @@ func (db *DB) init() error {
 
 		// Initialize the meta page.
 		m := p.meta()
-		m.magic = magic
-		m.version = version
+		m.magic = Magic
+		m.version = Version
 		m.pageSize = uint32(db.pageSize)
 		m.freelist = 2
 		m.root = bucket{root: 3}

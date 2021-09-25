@@ -9,6 +9,7 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/c0mm4nd/dbolt/consts"
 	"golang.org/x/sys/windows"
 )
 
@@ -87,7 +88,7 @@ func mmap(db *DB, sz int) error {
 
 	// Convert to a byte array.
 	//revive:disable
-	db.data = ((*[maxMapSize]byte)(unsafe.Pointer(addr)))
+	db.data = ((*[consts.MaxMapSize]byte)(unsafe.Pointer(addr)))
 	//revive:enable
 	db.datasz = sz
 
@@ -106,4 +107,9 @@ func munmap(db *DB) error {
 		return os.NewSyscallError("UnmapViewOfFile", err)
 	}
 	return nil
+}
+
+// fdatasync flushes written data to a file descriptor.
+func fdatasync(db *DB) error {
+	return db.file.Sync()
 }

@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 	"unsafe"
+
+	"github.com/c0mm4nd/dbolt/consts"
 )
 
 // txid represents the internal transaction identifier.
@@ -529,8 +531,8 @@ func (tx *Tx) write() error {
 		// Write out page in "max allocation" sized chunks.
 		for {
 			sz := rem
-			if sz > maxAllocSize-1 {
-				sz = maxAllocSize - 1
+			if sz > consts.MaxAllocSize-1 {
+				sz = consts.MaxAllocSize - 1
 			}
 			buf := unsafeByteSlice(unsafe.Pointer(p), written, 0, int(sz))
 

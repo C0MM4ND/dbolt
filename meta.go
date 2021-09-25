@@ -20,9 +20,9 @@ type meta struct {
 
 // validate checks the marker bytes and version of the meta page to ensure it matches this binary.
 func (m *meta) validate() error {
-	if m.magic != magic {
+	if m.magic != Magic {
 		return ErrInvalid
-	} else if m.version != version {
+	} else if m.version != Version {
 		return ErrVersionMismatch
 	} else if m.checksum != 0 && m.checksum != m.sum64() {
 		return ErrChecksum

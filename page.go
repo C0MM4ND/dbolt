@@ -11,8 +11,10 @@ const pageHeaderSize = unsafe.Sizeof(page{})
 
 const minKeysPerPage = 2
 
-const branchPageElementSize = unsafe.Sizeof(branchPageElement{})
-const leafPageElementSize = unsafe.Sizeof(leafPageElement{})
+const (
+	branchPageElementSize = unsafe.Sizeof(branchPageElement{})
+	leafPageElementSize   = unsafe.Sizeof(leafPageElement{})
+)
 
 const (
 	branchPageFlag   = 0x01
@@ -24,6 +26,7 @@ const (
 const (
 	bucketLeafFlag = 0x01
 )
+const pgidNoFreelist pgid = 0xffffffffffffffff
 
 type pgid uint64
 
