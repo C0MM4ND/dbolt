@@ -3,7 +3,6 @@ package dbolt
 import (
 	"errors"
 	"fmt"
-	"hash/fnv"
 	"log"
 	"os"
 	"runtime"
@@ -11,24 +10,6 @@ import (
 	"sync"
 	"time"
 	"unsafe"
-)
-
-// The largest step that can be taken when remapping the mmap.
-const maxMmapStep = 1 << 30 // 1GB
-
-// The data file format version.
-const version = 2
-
-// Represents a marker value to indicate that a file is a Bolt DB.
-const magic uint32 = 0xED0CDAED
-
-const pgidNoFreelist pgid = 0xffffffffffffffff
-
-// Default values if not set in a DB instance.
-const (
-	DefaultMaxBatchSize  int = 1000
-	DefaultMaxBatchDelay     = 10 * time.Millisecond
-	DefaultAllocSize         = 16 * 1024 * 1024
 )
 
 // default page size for db is set to the OS page size.
@@ -51,74 +32,7 @@ const (
 // All data access is performed through transactions which can be obtained through the DB.
 // All the functions on DB will return a ErrDatabaseNotOpen if accessed before Open() is called.
 type DB struct {
-	// When enabled, the database will perform a Check() after every commit.
-	// A panic is issued if the database is in an inconsistent state. This
-	// flag has a large performance impact so it should only be used for
-	// debugging purposes.
-	StrictMode bool
-
-	// Setting the NoSync flag will cause the database to skip fsync()
-	// calls after each commit. This can be useful when bulk loading data
-	// into a database and you can restart the bulk load in the event of
-	// a system failure or database corruption. Do not set this flag for
-	// normal use.
-	//
-	// If the package global IgnoreNoSync constant is true, this value is
-	// ignored.  See the comment on that constant for more details.
-	//
-	// THIS IS UNSAFE. PLEASE USE WITH CAUTION.
-	NoSync bool
-
-	// When true, skips syncing freelist to disk. This improves the database
-	// write performance under normal operation, but requires a full database
-	// re-sync during recovery.
-	NoFreelistSync bool
-
-	// FreelistType sets the backend freelist type. There are two options. Array which is simple but endures
-	// dramatic performance degradation if database is large and framentation in freelist is common.
-	// The alternative one is using hashmap, it is faster in almost all circumstances
-	// but it doesn't guarantee that it offers the smallest page id available. In normal case it is safe.
-	// The default type is array
-	FreelistType FreelistType
-
-	// When true, skips the truncate call when growing the database.
-	// Setting this to true is only safe on non-ext3/ext4 systems.
-	// Skipping truncation avoids preallocation of hard drive space and
-	// bypasses a truncate() and fsync() syscall on remapping.
-	//
-	// https://github.com/boltdb/bolt/issues/284
-	NoGrowSync bool
-
-	// If you want to read the entire database fast, you can set MmapFlag to
-	// syscall.MAP_POPULATE on Linux 2.6.23+ for sequential read-ahead.
-	MmapFlags int
-
-	// MaxBatchSize is the maximum size of a batch. Default value is
-	// copied from DefaultMaxBatchSize in Open.
-	//
-	// If <=0, disables batching.
-	//
-	// Do not change concurrently with calls to Batch.
-	MaxBatchSize int
-
-	// MaxBatchDelay is the maximum delay before a batch starts.
-	// Default value is copied from DefaultMaxBatchDelay in Open.
-	//
-	// If <=0, effectively disables batching.
-	//
-	// Do not change concurrently with calls to Batch.
-	MaxBatchDelay time.Duration
-
-	// AllocSize is the amount of space allocated when the database
-	// needs to create new pages. This is done to amortize the cost
-	// of truncate() and fsync() when growing the data file.
-	AllocSize int
-
-	// Mlock locks database file in memory when set to true.
-	// It prevents major page faults, however used memory can't be reclaimed.
-	//
-	// Supported only on Unix via mlock/munlock syscalls.
-	Mlock bool
+	*Options
 
 	path     string
 	openFile func(string, int, os.FileMode) (*os.File, error)
@@ -177,25 +91,21 @@ func (db *DB) String() string {
 // Passing in nil options will cause Bolt to open the database with the default options.
 func Open(path string, mode os.FileMode, options *Options) (*DB, error) {
 	db := &DB{
-		opened: true,
+		opened:  true,
+		Options: options,
 	}
+
 	// Set default options if no options are provided.
-	if options == nil {
-		options = DefaultOptions
+	if db.Options == nil {
+		db.Options = DefaultOptions
 	}
-	db.NoSync = options.NoSync
-	db.NoGrowSync = options.NoGrowSync
-	db.MmapFlags = options.MmapFlags
-	db.NoFreelistSync = options.NoFreelistSync
-	db.FreelistType = options.FreelistType
-	db.Mlock = options.Mlock
 
 	// Set default values for later DB operations.
 	db.MaxBatchSize = DefaultMaxBatchSize
 	db.MaxBatchDelay = DefaultMaxBatchDelay
 	db.AllocSize = DefaultAllocSize
 
-	flag := os.O_RDWR
+	flag := os.O_RDWR // TODO: support multi-file storage
 	if options.ReadOnly {
 		flag = os.O_RDONLY
 		db.readOnly = true
@@ -1062,70 +972,6 @@ func (db *DB) freepages() []pgid {
 	return fids
 }
 
-// Options represents the options that can be set when opening a database.
-type Options struct {
-	// Timeout is the amount of time to wait to obtain a file lock.
-	// When set to zero it will wait indefinitely. This option is only
-	// available on Darwin and Linux.
-	Timeout time.Duration
-
-	// Sets the DB.NoGrowSync flag before memory mapping the file.
-	NoGrowSync bool
-
-	// Do not sync freelist to disk. This improves the database write performance
-	// under normal operation, but requires a full database re-sync during recovery.
-	NoFreelistSync bool
-
-	// FreelistType sets the backend freelist type. There are two options. Array which is simple but endures
-	// dramatic performance degradation if database is large and framentation in freelist is common.
-	// The alternative one is using hashmap, it is faster in almost all circumstances
-	// but it doesn't guarantee that it offers the smallest page id available. In normal case it is safe.
-	// The default type is array
-	FreelistType FreelistType
-
-	// Open database in read-only mode. Uses flock(..., LOCK_SH |LOCK_NB) to
-	// grab a shared lock (UNIX).
-	ReadOnly bool
-
-	// Sets the DB.MmapFlags flag before memory mapping the file.
-	MmapFlags int
-
-	// InitialMmapSize is the initial mmap size of the database
-	// in bytes. Read transactions won't block write transaction
-	// if the InitialMmapSize is large enough to hold database mmap
-	// size. (See DB.Begin for more information)
-	//
-	// If <=0, the initial map size is 0.
-	// If initialMmapSize is smaller than the previous database size,
-	// it takes no effect.
-	InitialMmapSize int
-
-	// PageSize overrides the default OS page size.
-	PageSize int
-
-	// NoSync sets the initial value of DB.NoSync. Normally this can just be
-	// set directly on the DB itself when returned from Open(), but this option
-	// is useful in APIs which expose Options but not the underlying DB.
-	NoSync bool
-
-	// OpenFile is used to open files. It defaults to os.OpenFile. This option
-	// is useful for writing hermetic tests.
-	OpenFile func(string, int, os.FileMode) (*os.File, error)
-
-	// Mlock locks database file in memory when set to true.
-	// It prevents potential page faults, however
-	// used memory can't be reclaimed. (UNIX only)
-	Mlock bool
-}
-
-// DefaultOptions represent the options used if nil options are passed into Open().
-// No timeout is used which will cause Bolt to wait indefinitely for a lock.
-var DefaultOptions = &Options{
-	Timeout:      0,
-	NoGrowSync:   false,
-	FreelistType: FreelistArrayType,
-}
-
 // Stats represents statistics about the database.
 type Stats struct {
 	// Freelist stats
@@ -1161,61 +1007,6 @@ func (s *Stats) Sub(other *Stats) Stats {
 type Info struct {
 	Data     uintptr
 	PageSize int
-}
-
-type meta struct {
-	magic    uint32
-	version  uint32
-	pageSize uint32
-	flags    uint32
-	root     bucket
-	freelist pgid
-	pgid     pgid
-	txid     txid
-	checksum uint64
-}
-
-// validate checks the marker bytes and version of the meta page to ensure it matches this binary.
-func (m *meta) validate() error {
-	if m.magic != magic {
-		return ErrInvalid
-	} else if m.version != version {
-		return ErrVersionMismatch
-	} else if m.checksum != 0 && m.checksum != m.sum64() {
-		return ErrChecksum
-	}
-	return nil
-}
-
-// copy copies one meta object to another.
-func (m *meta) copy(dest *meta) {
-	*dest = *m
-}
-
-// write writes the meta onto a page.
-func (m *meta) write(p *page) {
-	if m.root.root >= m.pgid {
-		panic(fmt.Sprintf("root bucket pgid (%d) above high water mark (%d)", m.root.root, m.pgid))
-	} else if m.freelist >= m.pgid && m.freelist != pgidNoFreelist {
-		// TODO: reject pgidNoFreeList if !NoFreelistSync
-		panic(fmt.Sprintf("freelist pgid (%d) above high water mark (%d)", m.freelist, m.pgid))
-	}
-
-	// Page id is either going to be 0 or 1 which we can determine by the transaction ID.
-	p.id = pgid(m.txid % 2)
-	p.flags |= metaPageFlag
-
-	// Calculate the checksum.
-	m.checksum = m.sum64()
-
-	m.copy(p.meta())
-}
-
-// generates the checksum for the meta.
-func (m *meta) sum64() uint64 {
-	h := fnv.New64a()
-	_, _ = h.Write((*[unsafe.Offsetof(meta{}.checksum)]byte)(unsafe.Pointer(m))[:])
-	return h.Sum64()
 }
 
 // _assert will panic with a given formatted message if the given condition is false.
