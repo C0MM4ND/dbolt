@@ -117,12 +117,12 @@ func Open(path string, mode os.FileMode, options *Options) (*DB, error) {
 	db.AllocSize = DefaultAllocSize
 
 	flag := os.O_RDWR // TODO: support multi-file storage
-	if options.ReadOnly {
+	if db.Options.ReadOnly {
 		flag = os.O_RDONLY
 		db.readOnly = true
 	}
 
-	db.openFile = options.OpenFile
+	db.openFile = db.Options.OpenFile
 	if db.openFile == nil {
 		db.openFile = os.OpenFile
 	}
@@ -142,7 +142,7 @@ func Open(path string, mode os.FileMode, options *Options) (*DB, error) {
 	// if !options.ReadOnly.
 	// The database file is locked using the shared lock (more than one process may
 	// hold a lock at the same time) otherwise (options.ReadOnly is set).
-	if err := flock(db, !db.readOnly, options.Timeout); err != nil {
+	if err := flock(db, !db.readOnly, db.Options.Timeout); err != nil {
 		_ = db.close()
 		return nil, err
 	}
@@ -150,7 +150,7 @@ func Open(path string, mode os.FileMode, options *Options) (*DB, error) {
 	// Default values for test hooks
 	db.ops.writeAt = db.file.WriteAt
 
-	if db.pageSize = options.PageSize; db.pageSize == 0 {
+	if db.pageSize = db.Options.PageSize; db.pageSize == 0 {
 		// Set the default page size to the OS page size.
 		db.pageSize = defaultPageSize
 	}
@@ -196,7 +196,7 @@ func Open(path string, mode os.FileMode, options *Options) (*DB, error) {
 	}
 
 	// Memory map the data file.
-	if err := db.mmap(options.InitialMmapSize); err != nil {
+	if err := db.mmap(db.Options.InitialMmapSize); err != nil {
 		_ = db.close()
 		return nil, err
 	}

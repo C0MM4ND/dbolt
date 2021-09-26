@@ -112,7 +112,7 @@ func TestNode_split(t *testing.T) {
 	// Split between 2 & 3.
 	n.split(100)
 
-	var parent = n.parent
+	parent := n.parent
 	if len(parent.children) != 2 {
 		t.Fatalf("exp=2; got=%d", len(parent.children))
 	}

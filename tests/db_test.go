@@ -1161,7 +1161,7 @@ func TestDB_Batch_Panic(t *testing.T) {
 	defer db.MustClose()
 
 	var sentinel int
-	var bork = &sentinel
+	bork := &sentinel
 	var problem interface{}
 	var err error
 
@@ -1580,7 +1580,7 @@ func BenchmarkDBBatchManual10x100(b *testing.B) {
 }
 
 func validateBatchBench(b *testing.B, db *DB) {
-	var rollback = errors.New("sentinel error to cause rollback")
+	rollback := errors.New("sentinel error to cause rollback")
 	validate := func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte("bench"))
 		h := fnv.New32a()
@@ -1634,7 +1634,7 @@ func MustOpenWithOption(o *bolt.Options) *DB {
 	}
 
 	freelistType := bolt.FreelistArrayType
-	if env := os.Getenv(bolt.TestFreelistType); env == string(bolt.FreelistMapType) {
+	if env := os.Getenv("TEST_FREELIST_TYPE"); env == string(bolt.FreelistMapType) {
 		freelistType = bolt.FreelistMapType
 	}
 	o.FreelistType = freelistType
@@ -1683,7 +1683,7 @@ func (db *DB) MustReopen() {
 
 // PrintStats prints the database stats
 func (db *DB) PrintStats() {
-	var stats = db.Stats()
+	stats := db.Stats()
 	fmt.Printf("[db] %-20s %-20s %-20s\n",
 		fmt.Sprintf("pg(%d/%d)", stats.TxStats.PageCount, stats.TxStats.PageAlloc),
 		fmt.Sprintf("cur(%d)", stats.TxStats.CursorCount),
@@ -1710,7 +1710,7 @@ func (db *DB) MustCheck() {
 
 		// If errors occurred, copy the DB and print the errors.
 		if len(errors) > 0 {
-			var path = tempfile()
+			path := tempfile()
 			if err := tx.CopyFile(path, 0600); err != nil {
 				panic(err)
 			}

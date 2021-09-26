@@ -518,7 +518,7 @@ func TestBucket_Nested(t *testing.T) {
 
 	// Cause a split.
 	if err := db.Update(func(tx *bolt.Tx) error {
-		var b = tx.Bucket([]byte("widgets"))
+		b := tx.Bucket([]byte("widgets"))
 		for i := 0; i < 10000; i++ {
 			if err := b.Put([]byte(strconv.Itoa(i)), []byte(strconv.Itoa(i))); err != nil {
 				t.Fatal(err)
@@ -532,7 +532,7 @@ func TestBucket_Nested(t *testing.T) {
 
 	// Insert into widgets/foo/baz.
 	if err := db.Update(func(tx *bolt.Tx) error {
-		var b = tx.Bucket([]byte("widgets"))
+		b := tx.Bucket([]byte("widgets"))
 		if err := b.Bucket([]byte("foo")).Put([]byte("baz"), []byte("yyyy")); err != nil {
 			t.Fatal(err)
 		}
@@ -544,7 +544,7 @@ func TestBucket_Nested(t *testing.T) {
 
 	// Verify.
 	if err := db.View(func(tx *bolt.Tx) error {
-		var b = tx.Bucket([]byte("widgets"))
+		b := tx.Bucket([]byte("widgets"))
 		if v := b.Bucket([]byte("foo")).Get([]byte("baz")); !bytes.Equal(v, []byte("yyyy")) {
 			t.Fatalf("unexpected value: %v", v)
 		}

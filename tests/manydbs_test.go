@@ -1,4 +1,4 @@
-package dbolt
+package dbolt_test
 
 import (
 	"fmt"
@@ -7,9 +7,11 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	dbolt "github.com/c0mm4nd/dbolt"
 )
 
-func createDb(t *testing.T) (*DB, func()) {
+func createDb(t *testing.T) (*dbolt.DB, func()) {
 	// First, create a temporary directory to be used for the duration of
 	// this test.
 	tempDirName, err := ioutil.TempDir("", "dboltmemtest")
@@ -18,7 +20,7 @@ func createDb(t *testing.T) (*DB, func()) {
 	}
 	path := filepath.Join(tempDirName, "testdb.db")
 
-	bdb, err := Open(path, 0600, nil)
+	bdb, err := dbolt.Open(path, 0600, nil)
 	if err != nil {
 		t.Fatalf("error creating dbolt db: %v", err)
 	}
@@ -40,7 +42,7 @@ func createAndPutKeys(t *testing.T) {
 	bucketName := []byte("bucket")
 
 	for i := 0; i < 100; i++ {
-		err := db.Update(func(tx *Tx) error {
+		err := db.Update(func(tx *dbolt.Tx) error {
 			nodes, err := tx.CreateBucketIfNotExists(bucketName)
 			if err != nil {
 				return err

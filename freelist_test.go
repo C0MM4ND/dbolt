@@ -61,7 +61,7 @@ func TestFreelist_releaseRange(t *testing.T) {
 		freeTxn  txid
 	}
 
-	var releaseRangeTests = []struct {
+	releaseRangeTests := []struct {
 		title         string
 		pagesIn       []testPage
 		releaseRanges []testRange
@@ -346,7 +346,6 @@ func Test_freelist_ReadIDs_and_getFreePageIDs(t *testing.T) {
 	if got2 := f2.getFreePageIDs(); !reflect.DeepEqual(got2, exp2) {
 		t.Fatalf("exp2=%#v; got2=%#v", exp2, got2)
 	}
-
 }
 
 func Test_freelist_mergeWithExist(t *testing.T) {
