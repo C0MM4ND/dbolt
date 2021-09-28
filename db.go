@@ -111,11 +111,6 @@ func Open(path string, mode os.FileMode, options *Options) (*DB, error) {
 		db.Options = DefaultOptions
 	}
 
-	// Set default values for later DB operations.
-	db.MaxBatchSize = DefaultMaxBatchSize
-	db.MaxBatchDelay = DefaultMaxBatchDelay
-	db.AllocSize = DefaultAllocSize
-
 	flag := os.O_RDWR // TODO: support multi-file storage
 	if db.Options.ReadOnly {
 		flag = os.O_RDONLY
