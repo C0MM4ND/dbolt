@@ -373,7 +373,7 @@ func TestOpen_Check(t *testing.T) {
 
 // Ensure that write errors to the meta file handler during initialization are returned.
 func TestOpen_MetaInitWriteError(t *testing.T) {
-	t.Skip("pending")
+	t.Skip("pending") // TODO
 }
 
 // Ensure that a database that is too small returns an error.
