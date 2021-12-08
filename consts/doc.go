@@ -1,2 +1,2 @@
-// Package consts stores the consts for different arch/os
+// Package consts stores the consts for different arch
 package consts
