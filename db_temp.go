@@ -1,13 +1,12 @@
 package dbolt
 
 import (
-	"io/ioutil"
 	"os"
 	"sync"
 )
 
 func openTempFile(pattern string, _ int, _ os.FileMode) (*os.File, error) {
-	return ioutil.TempFile("", pattern)
+	return os.CreateTemp("", pattern)
 }
 
 // Open creates and opens a database at the temporary folder.
@@ -30,10 +29,8 @@ func OpenTemp(pattern string, options *Options) (*DB, error) {
 		db.readOnly = true
 	}
 
-	db.openFile = db.Options.OpenFile
-	if db.openFile == nil {
-		db.openFile = openTempFile
-	}
+	// overwrite openFile
+	db.openFile = openTempFile
 
 	// Open data file and separate sync handler for metadata writes.
 	var err error
