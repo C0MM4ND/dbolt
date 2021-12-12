@@ -49,8 +49,8 @@ jobs:
           upcase=$(echo ${{ matrix.target }} | awk '{ print toupper($0) }' | sed 's/-/_/g')
         if: matrix.target != '' && matrix.os == 'ubuntu-latest'
 
-      - name: Analysis
-        run: go vet ./...
+      - name: Run Revive Analysis
+        run: go install github.com/mgechev/revive@latest && revive
 
       - name: Test
         run: go test -p 1 ./...
