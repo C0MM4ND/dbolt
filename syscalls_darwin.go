@@ -1,4 +1,4 @@
-//go:build !windows
+//go:build !linux && !windows
 
 package dbolt
 
@@ -88,5 +88,5 @@ func munmap(db *DB) error {
 
 // fdatasync flushes written data to a file descriptor.
 func fdatasync(db *DB) error {
-	return syscall.Fdatasync(int(db.file.Fd()))
+	return db.file.Sync()
 }
